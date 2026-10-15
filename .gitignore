@@ -1,0 +1,16 @@
+# deps
+node_modules/
+.opencode/node_modules/
+
+# build output (regenerated)
+dist/
+
+# local tool state
+.opencode/
+
+# logs / OS
+*.log
+.DS_Store
+
+# Android SDK path (machine-specific, already covered by android/.gitignore too)
+android/local.properties
