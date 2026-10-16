@@ -87,9 +87,38 @@ Tip for iteration: `npx cap run android --live-reload --host=<your-lan-ip>`.
 - HID device role needs **Android 9+**; iOS cannot advertise as HID.
 - Web Bluetooth (central-only) can't advertise — native build required for HID.
 
+## Known issues
+
+Open (under investigation):
+- **D-pad on some Android hosts**: hat directions can trigger host-UI edge behavior
+  (e.g. exit/select in launchers) instead of game-style navigation, while face buttons
+  map correctly. Suspected host focus handling, not our report data (hat values verified
+  pure: single values 0/2/4/6, neutral 8). Planned: optional D-pad-as-buttons mode.
+- **Browser Gamepad API ritual**: Chrome/Firefox hide controllers until a button is
+  pressed with the tester tab focused. Always press A on the pad after opening
+  `gamepad-tester.com`; `navigator.getGamepads()` stays empty otherwise.
+- **Host descriptor cache**: after any descriptor change you MUST forget the bond
+  (`bluetoothctl remove <MAC>`) and re-pair, or the host keeps parsing the old layout.
+
+Fixed in current build (kept here for reference):
+- Stick drift / radio spam at rest → hysteresis deadzone (settle < 6, break > 10) +
+  byte-level send dedup: hands-off = one neutral report, then silence.
+- Phantom multi-taps → pointer capture + one-press-per-finger guard on all buttons.
+- Stick hijack by second finger → first-finger ownership until release.
+- Forced diagonals → cardinal lock (2.5× dominant-axis rule); true diagonals still pass.
+- Sleep disconnects → native `FLAG_KEEP_SCREEN_ON` + persistent 5s rejoin loop.
+- Register took 3 taps with cryptic errors → one-tap chain (BT enable → perms →
+  proxy → register) with specific failure reasons.
+- App looked like a zoomable webpage → locked landscape, immersive fullscreen,
+  WebView + viewport zoom disabled, fixed non-scrolling layout.
+
 ## Roadmap
 
-- [ ] Lock landscape in the APK (`screenOrientation`)
+- [x] Lock landscape in the APK (`screenOrientation`)
+- [x] One-tap connect-and-play (auto-register, remembered host, wake lock)
+- [x] Composite mouse (cursor + clicks + wheel) alongside gamepad
+- [x] Drift-free free state (hysteresis + dedup + stuck-input watchdog)
+- [ ] D-pad-as-buttons mode for picky hosts
 - [ ] Pressure-sensitive triggers (dedicated HID bytes)
 - [ ] Battery level reporting to host
 - [ ] Release-signed AAB for Play publishing
